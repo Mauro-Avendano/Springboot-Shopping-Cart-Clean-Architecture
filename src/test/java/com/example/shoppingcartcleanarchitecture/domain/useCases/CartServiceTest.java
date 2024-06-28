@@ -3,6 +3,7 @@ package com.example.shoppingcartcleanarchitecture.domain.useCases;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Cart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.ItemCart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Product;
+import com.example.shoppingcartcleanarchitecture.domain.exceptions.ProductsNotFoundException;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.CartOutputPort;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.InputProduct;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.ProductOutputPort;
@@ -15,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class CartServiceTest {
@@ -57,6 +59,23 @@ class CartServiceTest {
         cartService.addProducts(sessionId, inputProducts);
 
         verify(productOutputAdapter, times(1)).getProducts(Arrays.asList(productId));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenProductIsNotFound() {
+        String sessionId = "fake-session-id";
+        String productId = "fake-product-1";
+        String messageException = "Products not found";
+        Cart cart = buildCart(sessionId);
+        List<String> exceptionDetails = Arrays.asList(productId);
+        List<InputProduct> inputProducts = Arrays.asList(new InputProduct(productId, 1));
+        when(cartOutputAdapter.getCart(sessionId)).thenReturn(cart);
+        when(productOutputAdapter.getProducts(Arrays.asList(productId))).thenThrow(new ProductsNotFoundException(messageException, Arrays.asList(productId)));
+
+        ProductsNotFoundException exception = assertThrows(ProductsNotFoundException.class, () -> { cartService.addProducts(sessionId, inputProducts); });
+        System.out.println(exception.getDetails());
+        assertIterableEquals(exceptionDetails, exception.getDetails());
+        assertEquals("Some products were not found", exception.getMessage());
     }
 
     private Cart buildCart(String sessionId) {

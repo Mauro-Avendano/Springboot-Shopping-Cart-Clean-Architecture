@@ -2,6 +2,7 @@ package com.example.shoppingcartcleanarchitecture.domain.useCases;
 
 import com.example.shoppingcartcleanarchitecture.domain.entities.Cart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Product;
+import com.example.shoppingcartcleanarchitecture.domain.exceptions.ProductsNotFoundException;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.CartOutputPort;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.AddProductUseCase;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.InputProduct;
@@ -25,10 +26,14 @@ public class CartService implements AddProductUseCase {
 
     @Override
     public Cart addProducts(String sessionId, List<InputProduct> inputProducts) {
-        Cart cart = cartOutputAdapter.getCart(sessionId);
+        try {
+            Cart cart = cartOutputAdapter.getCart(sessionId);
 
-        List<Product> products = productOutputAdapter.getProducts(inputProducts.stream().map((product -> product.productId())).collect(Collectors.toUnmodifiableList()));
+            List<Product> products = productOutputAdapter.getProducts(inputProducts.stream().map((product -> product.productId())).collect(Collectors.toUnmodifiableList()));
 
-        return cart;
+            return cart;
+        } catch (ProductsNotFoundException e) {
+            throw new ProductsNotFoundException("Some products were not found", e.getDetails());
+        }
     }
 }
