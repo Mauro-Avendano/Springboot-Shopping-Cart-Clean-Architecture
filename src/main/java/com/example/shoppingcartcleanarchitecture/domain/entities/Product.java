@@ -1,11 +1,13 @@
 package com.example.shoppingcartcleanarchitecture.domain.entities;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
+@Getter
 public class Product {
-    String productId;
-    String productName;
-    String productDescription;
-    int productPrice;
+    String id;
+    String name;
+    String description;
+    int price;
 }

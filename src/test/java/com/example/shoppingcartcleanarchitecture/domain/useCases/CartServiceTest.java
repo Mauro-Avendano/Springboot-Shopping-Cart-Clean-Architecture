@@ -3,7 +3,9 @@ package com.example.shoppingcartcleanarchitecture.domain.useCases;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Cart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.ItemCart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Product;
-import com.example.shoppingcartcleanarchitecture.domain.useCases.interfaces.CartOutputPort;
+import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.CartOutputPort;
+import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.InputProduct;
+import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.ProductOutputPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -11,12 +13,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 
 class CartServiceTest {
     @Mock
     CartOutputPort cartOutputAdapter;
+
+    @Mock
+    ProductOutputPort productOutputAdapter;
 
     @InjectMocks
     CartService cartService;
@@ -27,14 +33,30 @@ class CartServiceTest {
     }
 
     @Test
-    void shouldCallTheCartOutputAdapter() {
+    void shouldCallTheCartOutputAdapterToGetCartFromPersistence() {
         String sessionId = "fake-session-id";
         Cart cart = buildCart(sessionId);
+        List<InputProduct> inputProducts = Arrays.asList(new InputProduct("fake-product-1", 1), new InputProduct("fake-product-2", 2));
         when(cartOutputAdapter.getCart(sessionId)).thenReturn(cart);
 
-        cartService.getCart(sessionId);
+        cartService.addProducts(sessionId, inputProducts);
 
         verify(cartOutputAdapter, times(1)).getCart(sessionId);
+    }
+
+    @Test
+    void shouldCallTheProductOutputAdapterToGetProductsFromPersistence() {
+        String sessionId = "fake-session-id";
+        Cart cart = buildCart(sessionId);
+        String productId = "fake-product-1";
+        List<InputProduct> inputProducts = Arrays.asList(new InputProduct(productId, 1));
+        List<Product> products = Arrays.asList(new Product(productId, "fake-name", "fake-description", 10000));
+        when(cartOutputAdapter.getCart(sessionId)).thenReturn(cart);
+        when(productOutputAdapter.getProducts(Arrays.asList(productId))).thenReturn(products);
+
+        cartService.addProducts(sessionId, inputProducts);
+
+        verify(productOutputAdapter, times(1)).getProducts(Arrays.asList(productId));
     }
 
     private Cart buildCart(String sessionId) {
