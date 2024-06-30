@@ -8,6 +8,7 @@ import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.AddProd
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.InputProduct;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.ProductOutputPort;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.availability.LivenessState;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,13 +28,32 @@ public class CartService implements AddProductUseCase {
     @Override
     public Cart addProducts(String sessionId, List<InputProduct> inputProducts) {
         try {
-            Cart cart = cartOutputAdapter.getCart(sessionId);
-
-            List<Product> products = productOutputAdapter.getProducts(inputProducts.stream().map((product -> product.productId())).collect(Collectors.toUnmodifiableList()));
+            Cart cart = getCart(sessionId);
+            List<Product> products = getProducts(inputProducts);
 
             return cart;
         } catch (ProductsNotFoundException e) {
             throw new ProductsNotFoundException("Some products were not found", e.getDetails());
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    private List<Product> getProducts(List<InputProduct> inputProducts) {
+        try {
+            return productOutputAdapter.getProducts(inputProducts.stream().map(inputProduct -> inputProduct.productId()).collect(Collectors.toUnmodifiableList()));
+        } catch (ProductsNotFoundException e) {
+            throw new ProductsNotFoundException("Some products were not found", e.getDetails());
+        } catch (Exception e) {
+            throw new RuntimeException("There was an error getting the products");
+        }
+    }
+
+    private Cart getCart(String sessionId) {
+        try {
+            return cartOutputAdapter.getCart(sessionId);
+        } catch (Exception e) {
+            throw new RuntimeException("There was an error getting the cart");
         }
     }
 }

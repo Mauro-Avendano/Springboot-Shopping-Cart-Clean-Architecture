@@ -47,6 +47,17 @@ class CartServiceTest {
     }
 
     @Test
+    void shouldThrowRunTimeExceptionWhenThereIsAnErrorGettingCartFromPersistence() {
+        String sessionId = "fake-session-id";
+
+        when(cartOutputAdapter.getCart(sessionId)).thenThrow(new RuntimeException("fake-error"));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> cartService.addProducts(sessionId, Arrays.asList(new InputProduct("fake-product-1", 1))));
+        assertEquals("There was an error getting the cart", exception.getMessage());
+    }
+
+
+    @Test
     void shouldCallTheProductOutputAdapterToGetProductsFromPersistence() {
         String sessionId = "fake-session-id";
         Cart cart = buildCart(sessionId);
@@ -62,7 +73,19 @@ class CartServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenProductIsNotFound() {
+    void shouldThrowRunTimeExceptionWhenThereIsAnErrorGettingProductsFromPersistence() {
+        String sessionId = "fake-session-id";
+        String productId = "fake-product-1";
+        Cart cart = buildCart(sessionId);
+        when(cartOutputAdapter.getCart(sessionId)).thenReturn(cart);
+        when(productOutputAdapter.getProducts(Arrays.asList(productId))).thenThrow(new RuntimeException("fake-error"));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> cartService.addProducts(sessionId, Arrays.asList(new InputProduct(productId, 1))));
+        assertEquals("There was an error getting the products", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowProductsNotFoundExceptionWhenProductIsNotFound() {
         String sessionId = "fake-session-id";
         String productId = "fake-product-1";
         String messageException = "Products not found";
@@ -73,7 +96,6 @@ class CartServiceTest {
         when(productOutputAdapter.getProducts(Arrays.asList(productId))).thenThrow(new ProductsNotFoundException(messageException, Arrays.asList(productId)));
 
         ProductsNotFoundException exception = assertThrows(ProductsNotFoundException.class, () -> { cartService.addProducts(sessionId, inputProducts); });
-        System.out.println(exception.getDetails());
         assertIterableEquals(exceptionDetails, exception.getDetails());
         assertEquals("Some products were not found", exception.getMessage());
     }
