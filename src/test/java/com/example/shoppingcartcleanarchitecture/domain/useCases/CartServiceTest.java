@@ -56,7 +56,6 @@ class CartServiceTest {
         assertEquals("There was an error getting the cart", exception.getMessage());
     }
 
-
     @Test
     void shouldCallTheProductOutputAdapterToGetProductsFromPersistence() {
         String sessionId = "fake-session-id";
@@ -98,6 +97,22 @@ class CartServiceTest {
         ProductsNotFoundException exception = assertThrows(ProductsNotFoundException.class, () -> { cartService.addProducts(sessionId, inputProducts); });
         assertIterableEquals(exceptionDetails, exception.getDetails());
         assertEquals("Some products were not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnTheUpdatedCartWhenTheProductIsAlreadyInTheCart() {
+        String sessionId = "fake-session-id";
+        Cart cart = buildCart(sessionId);
+        int quantity = 1;
+        String productId = "fake-product-id";
+        List<InputProduct> inputProducts = Arrays.asList(new InputProduct(productId, quantity));
+        List<Product> products = Arrays.asList(new Product(productId, "fake-name", "fake-description", 10000));
+        when(cartOutputAdapter.getCart(sessionId)).thenReturn(cart);
+        when(productOutputAdapter.getProducts(Arrays.asList(productId))).thenReturn(products);
+
+        Cart returnedCart = cartService.addProducts(sessionId, inputProducts);
+
+        assertEquals(2, returnedCart.getItems().get(0).getQuantity());
     }
 
     private Cart buildCart(String sessionId) {

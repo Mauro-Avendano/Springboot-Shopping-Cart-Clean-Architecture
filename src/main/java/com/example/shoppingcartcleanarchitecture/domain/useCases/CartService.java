@@ -8,10 +8,10 @@ import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.AddProd
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.InputProduct;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.ProductOutputPort;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.availability.LivenessState;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +30,11 @@ public class CartService implements AddProductUseCase {
         try {
             Cart cart = getCart(sessionId);
             List<Product> products = getProducts(inputProducts);
+
+            products.forEach(product -> {
+                Optional<InputProduct> inputProduct = inputProducts.stream().filter(ip -> ip.productId() == product.getId()).findFirst();
+                cart.addProduct(product, inputProduct.get().quantity());
+            });
 
             return cart;
         } catch (ProductsNotFoundException e) {
