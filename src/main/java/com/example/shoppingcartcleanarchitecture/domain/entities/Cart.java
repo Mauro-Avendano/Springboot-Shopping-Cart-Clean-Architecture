@@ -19,16 +19,22 @@ public class Cart {
         this.items = items;
     }
 
+    public Cart(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
     public void addProduct(Product product, int quantity) {
-        items.forEach(itemCart -> {
-            boolean found = false;
-            if (itemCart.getProduct().getId() == product.getId()) {
-                itemCart.setQuantity(itemCart.getQuantity() + quantity);
-                found = true;
+        Integer idx = null;
+        for (int i = 0; i < items.size(); i++) {
+            if(items.get(i).getProduct().getId() == product.getId()) {
+                idx = i;
+                break;
             }
-            if (!found) {
-                items.add(new ItemCart(product, quantity));
-            }
-        });
+        }
+        if (idx != null) {
+            items.get(idx).setQuantity(items.get(idx).getQuantity() + quantity);
+        } else {
+            this.items.add(new ItemCart(product, quantity));
+        }
     }
 }

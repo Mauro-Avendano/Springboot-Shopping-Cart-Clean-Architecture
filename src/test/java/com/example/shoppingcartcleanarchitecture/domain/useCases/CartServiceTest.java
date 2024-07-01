@@ -3,6 +3,7 @@ package com.example.shoppingcartcleanarchitecture.domain.useCases;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Cart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.ItemCart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Product;
+import com.example.shoppingcartcleanarchitecture.domain.exceptions.CartNotFoundException;
 import com.example.shoppingcartcleanarchitecture.domain.exceptions.ProductsNotFoundException;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.CartOutputPort;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.InputProduct;
@@ -13,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -115,11 +117,33 @@ class CartServiceTest {
         assertEquals(2, returnedCart.getItems().get(0).getQuantity());
     }
 
+    @Test
+    void shouldReturnTheUpdatedCartWhenProductsAreNotInCart() {
+        String sessionId = "fake-session-id";
+        String productId1 = "fake-product-1";
+        String productId2 = "fake-product-2";
+        int quantityProduct1 = 1;
+        int quantityProduct2 = 2;
+        List<InputProduct> inputProducts = Arrays.asList(new InputProduct(productId1, quantityProduct1), new InputProduct(productId2, quantityProduct2));
+        List<Product> products = Arrays.asList(
+                new Product(productId1, "fake-name", "fake-description", 10000),
+                new Product(productId2, "fake-name", "fake-description", 10000));
+        when(cartOutputAdapter.getCart(sessionId)).thenThrow(new CartNotFoundException("cart " + sessionId + " not found"));
+        when(productOutputAdapter.getProducts(Arrays.asList(productId1, productId2))).thenReturn(products);
+
+        Cart cart = cartService.addProducts(sessionId, inputProducts);
+
+        assertEquals(cart.getItems().get(0).getProduct().getId(), productId1);
+        assertEquals(cart.getItems().get(0).getQuantity(), quantityProduct1);
+        assertEquals(cart.getItems().get(1).getProduct().getId(), productId2);
+        assertEquals(cart.getItems().get(1).getQuantity(), quantityProduct2);
+    }
+
     private Cart buildCart(String sessionId) {
         String cartId = "fake-cart-id";
         Product product = new Product("fake-product-id", "fake-product-name", "fake-product-description", 1000);
         ItemCart itemCart = new ItemCart(product, 1);
-        Cart cart = new Cart(cartId, sessionId, Arrays.asList(itemCart));
+        Cart cart = new Cart(cartId, sessionId, new ArrayList<>(Arrays.asList(itemCart)));
 
         return cart;
     }

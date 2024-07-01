@@ -2,6 +2,7 @@ package com.example.shoppingcartcleanarchitecture.domain.useCases;
 
 import com.example.shoppingcartcleanarchitecture.domain.entities.Cart;
 import com.example.shoppingcartcleanarchitecture.domain.entities.Product;
+import com.example.shoppingcartcleanarchitecture.domain.exceptions.CartNotFoundException;
 import com.example.shoppingcartcleanarchitecture.domain.exceptions.ProductsNotFoundException;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.CartOutputPort;
 import com.example.shoppingcartcleanarchitecture.domain.useCases.port.in.AddProductUseCase;
@@ -10,6 +11,7 @@ import com.example.shoppingcartcleanarchitecture.domain.useCases.port.out.Produc
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,6 +59,8 @@ public class CartService implements AddProductUseCase {
     private Cart getCart(String sessionId) {
         try {
             return cartOutputAdapter.getCart(sessionId);
+        } catch (CartNotFoundException e) {
+            return new Cart(sessionId, new ArrayList<>());
         } catch (Exception e) {
             throw new RuntimeException("There was an error getting the cart");
         }
